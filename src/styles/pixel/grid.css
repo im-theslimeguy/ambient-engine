@@ -1,0 +1,122 @@
+/*
+ * Grid tracks are deliberately quantized instead of using `1fr`.
+ *
+ * `1fr` distributes the remaining space as a real number. The track formula
+ * below rounds each equal track down to the virtual pixel, so every column
+ * boundary starts on the same local grid. A sub-pixel remainder is kept at
+ * the trailing edge rather than being spread across all tracks.
+ */
+.pixel-grid {
+  display: grid;
+  --pixel-gap: 0px;
+  --pixel-grid-column-count: 1;
+  grid-template-columns: repeat(
+    var(--pixel-grid-column-count),
+    minmax(
+      0,
+      round(
+        down,
+        calc(
+          (100% - ((var(--pixel-grid-column-count) - 1) * var(--pixel-gap))) /
+            var(--pixel-grid-column-count)
+        ),
+        var(--pixel)
+      )
+    )
+  );
+  justify-content: start;
+}
+
+.pixel-grid-cols-1 { --pixel-grid-column-count: 1; }
+.pixel-grid-cols-2 { --pixel-grid-column-count: 2; }
+.pixel-grid-cols-3 { --pixel-grid-column-count: 3; }
+.pixel-grid-cols-4 { --pixel-grid-column-count: 4; }
+.pixel-grid-cols-5 { --pixel-grid-column-count: 5; }
+.pixel-grid-cols-6 { --pixel-grid-column-count: 6; }
+.pixel-grid-cols-7 { --pixel-grid-column-count: 7; }
+.pixel-grid-cols-8 { --pixel-grid-column-count: 8; }
+.pixel-grid-cols-9 { --pixel-grid-column-count: 9; }
+.pixel-grid-cols-10 { --pixel-grid-column-count: 10; }
+.pixel-grid-cols-11 { --pixel-grid-column-count: 11; }
+.pixel-grid-cols-12 { --pixel-grid-column-count: 12; }
+.pixel-grid-cols-13 { --pixel-grid-column-count: 13; }
+.pixel-grid-cols-14 { --pixel-grid-column-count: 14; }
+.pixel-grid-cols-15 { --pixel-grid-column-count: 15; }
+.pixel-grid-cols-16 { --pixel-grid-column-count: 16; }
+
+/* Responsive column distributions. */
+@media (min-width: 640px) {
+  .sm\:pixel-grid-cols-1 { --pixel-grid-column-count: 1; }
+  .sm\:pixel-grid-cols-2 { --pixel-grid-column-count: 2; }
+  .sm\:pixel-grid-cols-3 { --pixel-grid-column-count: 3; }
+  .sm\:pixel-grid-cols-4 { --pixel-grid-column-count: 4; }
+  .sm\:pixel-grid-cols-5 { --pixel-grid-column-count: 5; }
+  .sm\:pixel-grid-cols-6 { --pixel-grid-column-count: 6; }
+  .sm\:pixel-grid-cols-7 { --pixel-grid-column-count: 7; }
+  .sm\:pixel-grid-cols-8 { --pixel-grid-column-count: 8; }
+  .sm\:pixel-grid-cols-9 { --pixel-grid-column-count: 9; }
+  .sm\:pixel-grid-cols-10 { --pixel-grid-column-count: 10; }
+  .sm\:pixel-grid-cols-11 { --pixel-grid-column-count: 11; }
+  .sm\:pixel-grid-cols-12 { --pixel-grid-column-count: 12; }
+  .sm\:pixel-grid-cols-13 { --pixel-grid-column-count: 13; }
+  .sm\:pixel-grid-cols-14 { --pixel-grid-column-count: 14; }
+  .sm\:pixel-grid-cols-15 { --pixel-grid-column-count: 15; }
+  .sm\:pixel-grid-cols-16 { --pixel-grid-column-count: 16; }
+}
+
+@media (min-width: 768px) {
+  .md\:pixel-grid-cols-1 { --pixel-grid-column-count: 1; }
+  .md\:pixel-grid-cols-2 { --pixel-grid-column-count: 2; }
+  .md\:pixel-grid-cols-3 { --pixel-grid-column-count: 3; }
+  .md\:pixel-grid-cols-4 { --pixel-grid-column-count: 4; }
+  .md\:pixel-grid-cols-5 { --pixel-grid-column-count: 5; }
+  .md\:pixel-grid-cols-6 { --pixel-grid-column-count: 6; }
+  .md\:pixel-grid-cols-7 { --pixel-grid-column-count: 7; }
+  .md\:pixel-grid-cols-8 { --pixel-grid-column-count: 8; }
+  .md\:pixel-grid-cols-9 { --pixel-grid-column-count: 9; }
+  .md\:pixel-grid-cols-10 { --pixel-grid-column-count: 10; }
+  .md\:pixel-grid-cols-11 { --pixel-grid-column-count: 11; }
+  .md\:pixel-grid-cols-12 { --pixel-grid-column-count: 12; }
+  .md\:pixel-grid-cols-13 { --pixel-grid-column-count: 13; }
+  .md\:pixel-grid-cols-14 { --pixel-grid-column-count: 14; }
+  .md\:pixel-grid-cols-15 { --pixel-grid-column-count: 15; }
+  .md\:pixel-grid-cols-16 { --pixel-grid-column-count: 16; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:pixel-grid-cols-1 { --pixel-grid-column-count: 1; }
+  .lg\:pixel-grid-cols-2 { --pixel-grid-column-count: 2; }
+  .lg\:pixel-grid-cols-3 { --pixel-grid-column-count: 3; }
+  .lg\:pixel-grid-cols-4 { --pixel-grid-column-count: 4; }
+  .lg\:pixel-grid-cols-5 { --pixel-grid-column-count: 5; }
+  .lg\:pixel-grid-cols-6 { --pixel-grid-column-count: 6; }
+  .lg\:pixel-grid-cols-7 { --pixel-grid-column-count: 7; }
+  .lg\:pixel-grid-cols-8 { --pixel-grid-column-count: 8; }
+  .lg\:pixel-grid-cols-9 { --pixel-grid-column-count: 9; }
+  .lg\:pixel-grid-cols-10 { --pixel-grid-column-count: 10; }
+  .lg\:pixel-grid-cols-11 { --pixel-grid-column-count: 11; }
+  .lg\:pixel-grid-cols-12 { --pixel-grid-column-count: 12; }
+  .lg\:pixel-grid-cols-13 { --pixel-grid-column-count: 13; }
+  .lg\:pixel-grid-cols-14 { --pixel-grid-column-count: 14; }
+  .lg\:pixel-grid-cols-15 { --pixel-grid-column-count: 15; }
+  .lg\:pixel-grid-cols-16 { --pixel-grid-column-count: 16; }
+}
+
+@media (min-width: 1280px) {
+  .xl\:pixel-grid-cols-1 { --pixel-grid-column-count: 1; }
+  .xl\:pixel-grid-cols-2 { --pixel-grid-column-count: 2; }
+  .xl\:pixel-grid-cols-3 { --pixel-grid-column-count: 3; }
+  .xl\:pixel-grid-cols-4 { --pixel-grid-column-count: 4; }
+  .xl\:pixel-grid-cols-5 { --pixel-grid-column-count: 5; }
+  .xl\:pixel-grid-cols-6 { --pixel-grid-column-count: 6; }
+  .xl\:pixel-grid-cols-7 { --pixel-grid-column-count: 7; }
+  .xl\:pixel-grid-cols-8 { --pixel-grid-column-count: 8; }
+  .xl\:pixel-grid-cols-9 { --pixel-grid-column-count: 9; }
+  .xl\:pixel-grid-cols-10 { --pixel-grid-column-count: 10; }
+  .xl\:pixel-grid-cols-11 { --pixel-grid-column-count: 11; }
+  .xl\:pixel-grid-cols-12 { --pixel-grid-column-count: 12; }
+  .xl\:pixel-grid-cols-13 { --pixel-grid-column-count: 13; }
+  .xl\:pixel-grid-cols-14 { --pixel-grid-column-count: 14; }
+  .xl\:pixel-grid-cols-15 { --pixel-grid-column-count: 15; }
+  .xl\:pixel-grid-cols-16 { --pixel-grid-column-count: 16; }
+}

@@ -1,0 +1,208 @@
+@import "tailwindcss";
+@import "./pixel/index.css";
+
+@font-face {
+	font-family: "BlockFont";
+	src: url("./fonts/BlockFont-Regular.woff") format("woff");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "BlockFont";
+	src: url("./fonts/BlockFont-Italic.woff") format("woff");
+	font-weight: 400;
+	font-style: italic;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "BlockFont";
+	src: url("./fonts/BlockFont-Bold.woff") format("woff");
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "BlockFont";
+	src: url("./fonts/BlockFont-BoldItalic.woff") format("woff");
+	font-weight: 700;
+	font-style: italic;
+	font-display: swap;
+}
+
+html,
+body {
+	min-height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background-color: #0d0e12;
+	color: #e4e4e7;
+	font-family: "Space Grotesk", sans-serif;
+}
+
+.pixel-page-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 768px) {
+	.pixel-page-layout {
+		grid-template-columns:
+			calc(160 * var(--pixel))
+			minmax(0, 1fr)
+			calc(147 * var(--pixel));
+	}
+}
+
+@media (min-width: 1024px) {
+	.pixel-page-layout {
+		grid-template-columns:
+			calc(173 * var(--pixel))
+			minmax(0, 1fr)
+			calc(160 * var(--pixel));
+	}
+}
+
+.pixel-blast {
+	position: fixed;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 0;
+	opacity: 0.23;
+}
+
+.doc {
+	color: #e5e5e5;
+	font-family: "Space Grotesk", sans-serif;
+	font-size: var(--text-sm);
+	line-height: var(--text-sm--line-height);
+}
+
+.doc h2,
+.doc h3 {
+	font-family: "BlockFont", monospace;
+	font-weight: 700;
+	letter-spacing: var(--pixel);
+	color: #ffffff;
+	font-synthesis: none;
+	-webkit-font-smoothing: none;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+.doc h2 {
+	font-size: var(--text-2xl);
+	line-height: calc(22 * var(--pixel));
+	margin: calc(12 * var(--pixel)) 0 calc(5 * var(--pixel));
+}
+
+.doc h3 {
+	font-size: var(--text-sm);
+	line-height: calc(12 * var(--pixel));
+	margin: calc(8 * var(--pixel)) 0 calc(3 * var(--pixel));
+}
+
+.doc p {
+	margin: 0 0 calc(8 * var(--pixel));
+}
+
+.doc a {
+	color: #6ee7b7;
+	text-decoration: none;
+}
+
+.doc a:hover {
+	color: #ffffff;
+}
+
+.doc strong {
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.doc ul,
+.doc ol {
+	margin: 0 0 calc(8 * var(--pixel));
+	padding-left: calc(12 * var(--pixel));
+}
+
+.doc li {
+	margin: calc(2 * var(--pixel)) 0;
+}
+
+.doc :not(pre) > code {
+	font-family: "BlockFont", monospace;
+	font-size: var(--font-pixel-base);
+	line-height: var(--leading-pixel-base);
+	padding: calc(1 * var(--pixel)) calc(3 * var(--pixel));
+	margin-inline: calc(1 * var(--pixel));
+	vertical-align: top;
+	color: #6ee7b7;
+	background: rgb(9 9 11 / 0.8);
+	border: var(--pixel) solid rgb(63 63 70 / 0.7);
+	-webkit-font-smoothing: none;
+}
+
+.doc table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	border: var(--pixel) solid #3a3a3a;
+	margin: calc(6 * var(--pixel)) 0 calc(8 * var(--pixel));
+	font-size: var(--text-sm);
+}
+
+.doc th {
+	text-align: left;
+	color: #ffffff;
+	background: #222222;
+	border-bottom: var(--pixel) solid #3a3a3a;
+	border-right: var(--pixel) solid #3a3a3a;
+	padding: calc(4 * var(--pixel));
+	font-family: "BlockFont", monospace;
+	font-weight: 700;
+	font-size: var(--text-sm);
+	line-height: calc(13 * var(--pixel));
+	-webkit-font-smoothing: none;
+}
+
+.doc td {
+	padding: calc(4 * var(--pixel));
+	background: #1e1e1e;
+	border-bottom: var(--pixel) solid #3a3a3a;
+	border-right: var(--pixel) solid #3a3a3a;
+	color: #d4d4d8;
+	font-size: var(--text-xs);
+	vertical-align: top;
+}
+
+.doc tr:nth-child(even) td {
+	background: #181818;
+}
+
+.doc th:last-child,
+.doc td:last-child {
+	border-right: 0;
+}
+
+.doc tr:last-child td {
+	border-bottom: 0;
+}
+
+.doc pre,
+.doc .astro-code {
+	margin: 0;
+	padding: 0;
+	background: transparent !important;
+	font-size: var(--text-xs);
+	line-height: calc(12 * var(--pixel));
+	overflow-x: auto;
+	white-space: pre;
+}

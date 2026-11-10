@@ -1,0 +1,97 @@
+/* Default component metrics live in the component layer so consumer-supplied
+ * Tailwind utilities and direct style props can intentionally override them. */
+@layer components {
+  /* Text owns semantic element defaults. Font size and line-height come from
+   * Tailwind's pixel-quantized text-* tokens; these rules only add behavior
+   * that cannot be expressed by a text utility alone. */
+  .pixel-text-flow {
+    margin-bottom: calc(8 * var(--pixel));
+  }
+
+  .pixel-text[data-pixel-element="h1"] {
+    margin-bottom: calc(4 * var(--pixel));
+  }
+
+  .pixel-text[data-pixel-element="h2"] {
+    margin-bottom: calc(3 * var(--pixel));
+  }
+
+  .pixel-text[data-pixel-element="h3"] {
+    margin-bottom: calc(2 * var(--pixel));
+  }
+
+  .pixel-button[data-pixel-size="sm"] {
+    font-size: var(--font-pixel-base);
+    line-height: calc(10 * var(--pixel));
+    padding: calc(2 * var(--pixel)) calc(3 * var(--pixel));
+  }
+
+  .pixel-button[data-pixel-size="base"] {
+    font-size: var(--font-pixel-base);
+    line-height: var(--leading-pixel-base);
+    padding: calc(3 * var(--pixel)) calc(5 * var(--pixel));
+  }
+
+  .pixel-button[data-pixel-size="lg"] {
+    font-size: var(--font-pixel-lg);
+    line-height: calc(18 * var(--pixel));
+    padding: calc(4 * var(--pixel)) calc(7 * var(--pixel));
+  }
+
+  .pixel-block-button__face {
+    font-size: var(--font-pixel-base);
+    line-height: calc(10 * var(--pixel));
+  }
+
+  .pixel-badge,
+  .pixel-tag {
+    font-size: var(--font-pixel-base);
+    line-height: calc(10 * var(--pixel));
+  }
+
+  .pixel-button,
+  .pixel-badge,
+  .pixel-tag {
+    letter-spacing: var(--pixel);
+  }
+
+  .pixel-badge {
+    padding: calc(1 * var(--pixel)) calc(3 * var(--pixel));
+  }
+
+  .pixel-tag {
+    padding: calc(2 * var(--pixel)) calc(4 * var(--pixel));
+  }
+
+  .pixel-code {
+    font-size: var(--font-pixel-base);
+    line-height: var(--leading-pixel-base);
+    padding: calc(1 * var(--pixel)) calc(3 * var(--pixel));
+    margin-inline: calc(1 * var(--pixel));
+    /* Inline code cannot have a grid-aligned x-origin after arbitrary body
+     * text, but its box can still start at the paragraph line box. */
+    vertical-align: top;
+  }
+
+  .pixel-code[data-pixel-code-mode="block"] {
+    width: fit-content;
+    margin-inline: 0;
+  }
+
+  .pixel-block-card {
+    font-size: var(--font-pixel-base);
+    line-height: var(--leading-pixel-base);
+  }
+
+  .pixel-input {
+    font-size: var(--font-pixel-base);
+    line-height: var(--leading-pixel-base);
+    padding: calc(3 * var(--pixel)) calc(4 * var(--pixel));
+    min-height: calc(18 * var(--pixel));
+  }
+
+  .pixel-icon {
+    width: calc(var(--pixel-icon-size, 8) * var(--pixel));
+    height: calc(var(--pixel-icon-size, 8) * var(--pixel));
+  }
+}

@@ -1,0 +1,1278 @@
+@import "./grid.css";
+@import "./flex.css";
+@import "./components.css";
+
+/*
+ * Public entry point for the pixel-grid package.
+ *
+ * A consuming Tailwind stylesheet only needs:
+ *
+ *   @import "tailwindcss";
+ *   @import "@steelmc/pixel-grid/css";
+ *
+ * The application can still override --pixel on PixelCanvas when it needs a
+ * different scale, but 1.5px is the stable default used by the design system.
+ */
+@source "../../";
+
+:root {
+    --pixel: 1.5px;
+
+    --font-pixel-base: calc(10 * var(--pixel));
+    --font-pixel-lg: calc(20 * var(--pixel));
+    --font-pixel-xl: calc(30 * var(--pixel));
+
+    --leading-pixel-base: calc(12 * var(--pixel));
+    --leading-pixel-lg: calc(22 * var(--pixel));
+    --leading-pixel-xl: calc(32 * var(--pixel));
+}
+
+@theme inline {
+    /* This drives spacing, sizing and numeric `leading-*` utilities. */
+    --spacing: var(--pixel);
+
+    --font-block: 'BlockFont', monospace;
+    --font-sans: 'Space Grotesk', sans-serif;
+    --font-inter: 'Space Grotesk', sans-serif;
+
+    /* Every built-in text size is an integer number of virtual pixels. */
+    --text-xs: calc(8 * var(--pixel));
+    --text-xs--line-height: calc(10 * var(--pixel));
+    --text-sm: calc(10 * var(--pixel));
+    --text-sm--line-height: calc(12 * var(--pixel));
+    --text-base: calc(11 * var(--pixel));
+    --text-base--line-height: calc(18 * var(--pixel));
+    --text-lg: calc(12 * var(--pixel));
+    --text-lg--line-height: calc(18 * var(--pixel));
+    --text-xl: calc(14 * var(--pixel));
+    --text-xl--line-height: calc(18 * var(--pixel));
+    --text-2xl: calc(20 * var(--pixel));
+    --text-2xl--line-height: calc(22 * var(--pixel));
+    --text-3xl: calc(30 * var(--pixel));
+    --text-3xl--line-height: calc(32 * var(--pixel));
+    --text-4xl: calc(40 * var(--pixel));
+    --text-4xl--line-height: calc(44 * var(--pixel));
+    --text-5xl: calc(48 * var(--pixel));
+    --text-5xl--line-height: calc(52 * var(--pixel));
+    --text-6xl: calc(60 * var(--pixel));
+    --text-6xl--line-height: calc(64 * var(--pixel));
+    --text-7xl: calc(72 * var(--pixel));
+    --text-7xl--line-height: calc(76 * var(--pixel));
+    --text-8xl: calc(96 * var(--pixel));
+    --text-8xl--line-height: calc(100 * var(--pixel));
+    --text-9xl: calc(128 * var(--pixel));
+    --text-9xl--line-height: calc(132 * var(--pixel));
+    --leading-snug: calc(11 * var(--pixel));
+    --leading-relaxed: calc(18 * var(--pixel));
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+.pixel-canvas {
+    width: round(down, 100%, var(--pixel));
+    min-height: round(up, 100vh, var(--pixel));
+    /* Keep the canonical grid origin on the viewport's device-pixel edge.
+     * Centering a 1279.5px canvas in a 1280px viewport would move every
+     * virtual-pixel boundary to x=.25px and make a 2x-DPR raster half-pixel
+     * soft, even though the CSS measurements are mathematically aligned. */
+    margin-inline-start: 0;
+    margin-inline-end: auto;
+    position: relative;
+}
+
+/* Dev-only grid overlays. They remain opt-in through PixelCanvas.debug. */
+.pixel-grid-debug {
+    --pixel-debug-color: rgba(0, 255, 170, 0.08);
+    --pixel-debug-line: 1px;
+}
+
+.pixel-grid-debug::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background-image:
+        linear-gradient(to right, var(--pixel-debug-color) 0 var(--pixel-debug-line), transparent var(--pixel-debug-line)),
+        linear-gradient(to bottom, var(--pixel-debug-color) 0 var(--pixel-debug-line), transparent var(--pixel-debug-line));
+    background-size: var(--pixel) var(--pixel);
+    /* The stroke is a guide over the boundary, not an extra grid track. */
+    background-position:
+        calc(-0.5 * var(--pixel-debug-line)) 0,
+        0 calc(-0.5 * var(--pixel-debug-line));
+}
+
+.pixel-grid-debug-major {
+    --pixel-debug-color: rgba(0, 255, 170, 0.15);
+    --pixel-debug-line: 1px;
+}
+
+.pixel-grid-debug-major::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background-image:
+        linear-gradient(to right, var(--pixel-debug-color) 0 var(--pixel-debug-line), transparent var(--pixel-debug-line)),
+        linear-gradient(to bottom, var(--pixel-debug-color) 0 var(--pixel-debug-line), transparent var(--pixel-debug-line));
+    background-size: calc(10 * var(--pixel)) calc(10 * var(--pixel));
+    background-position:
+        calc(-0.5 * var(--pixel-debug-line)) 0,
+        0 calc(-0.5 * var(--pixel-debug-line));
+}
+
+/* BlockFont is a raster-like face. Keep browser text smoothing off wherever
+ * the font utility is used so every component shares the same glyph policy. */
+@layer components {
+    .font-block {
+        font-synthesis: none;
+        -webkit-font-smoothing: none;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* At 2x density, half a CSS pixel is one physical pixel. Keeping the debug
+ * stroke at that width leaves the other two physical pixels of a 1.5px cell
+ * visible, so the overlay reads as a grid instead of a striped veil. */
+@media (min-resolution: 2dppx) {
+    .pixel-grid-debug,
+    .pixel-grid-debug-major {
+        --pixel-debug-line: 0.5px;
+    }
+}
+
+/* Numeric border widths are virtual-pixel widths, including plain `border`. */
+@utility border {
+    border-width: var(--pixel);
+}
+
+@utility border-t {
+    border-top-width: var(--pixel);
+}
+
+@utility border-r {
+    border-right-width: var(--pixel);
+}
+
+@utility border-b {
+    border-bottom-width: var(--pixel);
+}
+
+@utility border-l {
+    border-left-width: var(--pixel);
+}
+
+@utility border-x {
+    border-inline-width: var(--pixel);
+}
+
+@utility border-y {
+    border-block-width: var(--pixel);
+}
+
+@utility border-* {
+    border-width: calc(--value(integer) * var(--pixel));
+}
+
+@utility border-t-* {
+    border-top-width: calc(--value(integer) * var(--pixel));
+}
+
+@utility border-b-* {
+    border-bottom-width: calc(--value(integer) * var(--pixel));
+}
+
+@utility border-l-* {
+    border-left-width: calc(--value(integer) * var(--pixel));
+}
+
+@utility border-r-* {
+    border-right-width: calc(--value(integer) * var(--pixel));
+}
+
+@utility border-x-* {
+    border-inline-width: calc(--value(integer) * var(--pixel));
+}
+
+@utility border-y-* {
+    border-block-width: calc(--value(integer) * var(--pixel));
+}
+
+/* Numeric spacing utilities are rounded at the utility boundary. This keeps
+ * ordinary Tailwind classes such as p-4.5 and gap-1.5 composable while making
+ * their resolved geometry land on the virtual grid. */
+@utility p-* {
+    padding: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility px-* {
+    padding-inline: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility py-* {
+    padding-block: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility ps-* {
+    padding-inline-start: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility pe-* {
+    padding-inline-end: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility pt-* {
+    padding-top: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility pr-* {
+    padding-right: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility pb-* {
+    padding-bottom: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility pl-* {
+    padding-left: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility m-* {
+    margin: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility mx-* {
+    margin-inline: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility my-* {
+    margin-block: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility mt-* {
+    margin-top: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility mr-* {
+    margin-right: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility mb-* {
+    margin-bottom: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility ml-* {
+    margin-left: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility gap-* {
+    gap: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+    --pixel-gap: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility gap-x-* {
+    column-gap: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+    --pixel-gap: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility gap-y-* {
+    row-gap: round(down, calc(--value(number) * var(--pixel)), var(--pixel));
+}
+
+@utility tracking-pixel {
+    letter-spacing: var(--pixel);
+}
+
+/* Pixel-art border radius via CSS masks (quantized stepped corners).
+ * Unlike standard border-radius which creates smooth anti-aliased curves,
+ * these masks cut crisp staircase/stepped corners aligned to the virtual pixel grid. */
+
+/* xs: 1 single virtual pixel notch (1P cut) */
+@utility pixel-rounded-xs {
+    mask-image:
+        linear-gradient(to bottom, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel))),
+        linear-gradient(to right, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel)));
+    -webkit-mask-image:
+        linear-gradient(to bottom, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel))),
+        linear-gradient(to right, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel)));
+}
+
+/* sm: 2 virtual pixels notch (2P cut) */
+@utility pixel-rounded-sm {
+    mask-image:
+        linear-gradient(to bottom, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel))),
+        linear-gradient(to right, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel)));
+    -webkit-mask-image:
+        linear-gradient(to bottom, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel))),
+        linear-gradient(to right, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel)));
+}
+
+@utility pixel-rounded {
+    mask-image:
+        linear-gradient(to bottom, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel))),
+        linear-gradient(to right, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel)));
+    -webkit-mask-image:
+        linear-gradient(to bottom, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel))),
+        linear-gradient(to right, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel)));
+}
+
+/* md: 4P radius (2-step stairs) */
+@utility pixel-rounded-md {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+/* lg: 6P radius (3-step stairs) */
+@utility pixel-rounded-lg {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+/* xl: 10P radius (4-step stairs) */
+@utility pixel-rounded-xl {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 20 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 8 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 20 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 8 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+/* 2xl: 16P radius (5-step wide curve) */
+@utility pixel-rounded-2xl {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 32 * var(--pixel)),
+        calc(100% - 32 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 20 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 8 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 32 * var(--pixel)),
+        calc(100% - 32 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 20 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 8 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+.pixel-rounded-xs {
+    mask-image:
+        linear-gradient(to bottom, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel))),
+        linear-gradient(to right, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel)));
+    -webkit-mask-image:
+        linear-gradient(to bottom, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel))),
+        linear-gradient(to right, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel)));
+}
+
+.pixel-rounded-sm {
+    mask-image:
+        linear-gradient(to bottom, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel))),
+        linear-gradient(to right, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel)));
+    -webkit-mask-image:
+        linear-gradient(to bottom, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel))),
+        linear-gradient(to right, transparent calc(2 * var(--pixel)), #000 calc(2 * var(--pixel)) calc(100% - 2 * var(--pixel)), transparent calc(100% - 2 * var(--pixel)));
+}
+
+.pixel-rounded,
+.pixel-rounded-md {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+.pixel-rounded-lg {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+.pixel-rounded-xl {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 20 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 8 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 20 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 8 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+.pixel-rounded-2xl {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 32 * var(--pixel)),
+        calc(100% - 32 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 20 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 8 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 32 * var(--pixel)),
+        calc(100% - 32 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 20 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 8 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+/* ==========================================================================
+ * Pixel Frame (Pure 1-pixel thin diagonal border without corner elbows)
+ *
+ * In pixel art, a true 1-pixel border forms a strict 1-pixel diagonal line:
+ *
+ *   OOOXO
+ *   OOXOO
+ *   OXOOO
+ *   XOOOO
+ *
+ * This is achieved via an outer mask on the frame container (background: border color)
+ * and an inner mask on the content with padding: var(--pixel).
+ * ========================================================================== */
+
+/* --- Outer Frame Masks --- */
+.pixel-frame-xs {
+    mask-image:
+        linear-gradient(to bottom, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel))),
+        linear-gradient(to right, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel)));
+    -webkit-mask-image:
+        linear-gradient(to bottom, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel))),
+        linear-gradient(to right, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel)));
+}
+
+.pixel-frame-sm {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) 100%,
+        calc(100% - 2 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) 100%,
+        calc(100% - 2 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+.pixel-frame-md {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 6 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 6 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+.pixel-frame-lg {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) 100%,
+        calc(100% - 6 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 6 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) 100%,
+        calc(100% - 6 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 6 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+.pixel-frame-xl {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        calc(100% - 20 * var(--pixel)) 100%,
+        100% calc(100% - 20 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) calc(100% - 6 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 10 * var(--pixel)),
+        calc(100% - 10 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 14 * var(--pixel)),
+        calc(100% - 14 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 16 * var(--pixel)),
+        calc(100% - 16 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 18 * var(--pixel)),
+        calc(100% - 18 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    -webkit-mask-size:
+        calc(100% - 20 * var(--pixel)) 100%,
+        100% calc(100% - 20 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) calc(100% - 6 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 10 * var(--pixel)),
+        calc(100% - 10 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 14 * var(--pixel)),
+        calc(100% - 14 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 16 * var(--pixel)),
+        calc(100% - 16 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 18 * var(--pixel)),
+        calc(100% - 18 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+.pixel-frame-2xl {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        calc(100% - 32 * var(--pixel)) 100%,
+        100% calc(100% - 32 * var(--pixel)),
+        calc(100% - 22 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 22 * var(--pixel)),
+        calc(100% - 16 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 16 * var(--pixel)),
+        calc(100% - 14 * var(--pixel)) calc(100% - 6 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) calc(100% - 14 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 10 * var(--pixel)) calc(100% - 10 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 18 * var(--pixel)),
+        calc(100% - 18 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 20 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 24 * var(--pixel)),
+        calc(100% - 24 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 26 * var(--pixel)),
+        calc(100% - 26 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 28 * var(--pixel)),
+        calc(100% - 28 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 30 * var(--pixel)),
+        calc(100% - 30 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    -webkit-mask-size:
+        calc(100% - 32 * var(--pixel)) 100%,
+        100% calc(100% - 32 * var(--pixel)),
+        calc(100% - 22 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 22 * var(--pixel)),
+        calc(100% - 16 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 16 * var(--pixel)),
+        calc(100% - 14 * var(--pixel)) calc(100% - 6 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) calc(100% - 14 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 10 * var(--pixel)) calc(100% - 10 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 18 * var(--pixel)),
+        calc(100% - 18 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 20 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 24 * var(--pixel)),
+        calc(100% - 24 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 26 * var(--pixel)),
+        calc(100% - 26 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 28 * var(--pixel)),
+        calc(100% - 28 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 30 * var(--pixel)),
+        calc(100% - 30 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+/* --- Inner Content Masks (offset by 1P) --- */
+.pixel-frame-content-xs {
+    /* Square content, outer cuts 1P corner */
+}
+
+.pixel-frame-content-sm {
+    mask-image:
+        linear-gradient(to bottom, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel))),
+        linear-gradient(to right, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel)));
+    -webkit-mask-image:
+        linear-gradient(to bottom, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel))),
+        linear-gradient(to right, transparent var(--pixel), #000 var(--pixel) calc(100% - var(--pixel)), transparent calc(100% - var(--pixel)));
+}
+
+.pixel-frame-content-md {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) 100%,
+        calc(100% - 2 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) 100%,
+        calc(100% - 2 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+.pixel-frame-content-lg {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        100% calc(100% - 6 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    -webkit-mask-size:
+        100% calc(100% - 6 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) 100%,
+        calc(100% - 4 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 4 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+.pixel-frame-content-xl {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        calc(100% - 18 * var(--pixel)) 100%,
+        100% calc(100% - 18 * var(--pixel)),
+        calc(100% - 10 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 10 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 6 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 14 * var(--pixel)),
+        calc(100% - 14 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 16 * var(--pixel)),
+        calc(100% - 16 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    -webkit-mask-size:
+        calc(100% - 18 * var(--pixel)) 100%,
+        100% calc(100% - 18 * var(--pixel)),
+        calc(100% - 10 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 10 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 6 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 14 * var(--pixel)),
+        calc(100% - 14 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 16 * var(--pixel)),
+        calc(100% - 16 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+.pixel-frame-content-2xl {
+    mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    -webkit-mask-image:
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000),
+        linear-gradient(#000, #000);
+    mask-size:
+        calc(100% - 30 * var(--pixel)) 100%,
+        100% calc(100% - 30 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 20 * var(--pixel)),
+        calc(100% - 14 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 14 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 6 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 10 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 10 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 16 * var(--pixel)),
+        calc(100% - 16 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 18 * var(--pixel)),
+        calc(100% - 18 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 22 * var(--pixel)),
+        calc(100% - 22 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 24 * var(--pixel)),
+        calc(100% - 24 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 26 * var(--pixel)),
+        calc(100% - 26 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 28 * var(--pixel)),
+        calc(100% - 28 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    -webkit-mask-size:
+        calc(100% - 30 * var(--pixel)) 100%,
+        100% calc(100% - 30 * var(--pixel)),
+        calc(100% - 20 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 20 * var(--pixel)),
+        calc(100% - 14 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 14 * var(--pixel)),
+        calc(100% - 12 * var(--pixel)) calc(100% - 6 * var(--pixel)),
+        calc(100% - 6 * var(--pixel)) calc(100% - 12 * var(--pixel)),
+        calc(100% - 10 * var(--pixel)) calc(100% - 8 * var(--pixel)),
+        calc(100% - 8 * var(--pixel)) calc(100% - 10 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 16 * var(--pixel)),
+        calc(100% - 16 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 4 * var(--pixel)) calc(100% - 18 * var(--pixel)),
+        calc(100% - 18 * var(--pixel)) calc(100% - 4 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 22 * var(--pixel)),
+        calc(100% - 22 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 24 * var(--pixel)),
+        calc(100% - 24 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 26 * var(--pixel)),
+        calc(100% - 26 * var(--pixel)) calc(100% - 2 * var(--pixel)),
+        calc(100% - 2 * var(--pixel)) calc(100% - 28 * var(--pixel)),
+        calc(100% - 28 * var(--pixel)) calc(100% - 2 * var(--pixel));
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
+
+@utility outline-1 {
+    outline-width: var(--pixel);
+}
+
+/* Tailwind has no side-specific border-style utility in this form. */
+@utility border-t-solid { border-top-style: solid; }
+@utility border-r-solid { border-right-style: solid; }
+@utility border-b-solid { border-bottom-style: solid; }
+@utility border-l-solid { border-left-style: solid; }
+@utility border-t-dashed { border-top-style: dashed; }
+@utility border-r-dashed { border-right-style: dashed; }
+@utility border-b-dashed { border-bottom-style: dashed; }
+@utility border-l-dashed { border-left-style: dashed; }
+
+/* Stable names for side styles that survive tailwind-merge in cn(). */
+@utility pixel-border-t-solid { border-top-style: solid; }
+@utility pixel-border-r-solid { border-right-style: solid; }
+@utility pixel-border-b-solid { border-bottom-style: solid; }
+@utility pixel-border-l-solid { border-left-style: solid; }
+@utility pixel-border-t-dashed { border-top-style: dashed; }
+@utility pixel-border-r-dashed { border-right-style: dashed; }
+@utility pixel-border-b-dashed { border-bottom-style: dashed; }
+@utility pixel-border-l-dashed { border-left-style: dashed; }
+
+/* Custom virtual-pixel dashed borders (5P dash, 3P gap). */
+.pixel-dashed-b,
+.pixel-dashed-t,
+.pixel-dashed-r,
+.pixel-dashed-l {
+    background-repeat: no-repeat;
+}
+
+.pixel-dashed-b,
+.pixel-dashed-t {
+    background-image: repeating-linear-gradient(
+        to right,
+        #3a3a3a 0,
+        #3a3a3a calc(5 * var(--pixel)),
+        transparent calc(5 * var(--pixel)),
+        transparent calc(8 * var(--pixel))
+    );
+    background-size: 100% var(--pixel);
+}
+
+.pixel-dashed-b { background-position: bottom left; }
+.pixel-dashed-t { background-position: top left; }
+
+.pixel-dashed-r,
+.pixel-dashed-l {
+    background-image: repeating-linear-gradient(
+        to bottom,
+        #3a3a3a 0,
+        #3a3a3a calc(5 * var(--pixel)),
+        transparent calc(5 * var(--pixel)),
+        transparent calc(8 * var(--pixel))
+    );
+    background-size: var(--pixel) 100%;
+}
+
+.pixel-dashed-r { background-position: top right; }
+.pixel-dashed-l { background-position: top left; }
+
+/* Border-bearing variants keep the border box in the layout, but paint the
+ * dash cadence ourselves so it is expressed in virtual pixels instead of the
+ * browser's implementation-defined border-dashed algorithm. */
+.pixel-border-dashed-b,
+.pixel-border-dashed-t {
+    background-image: repeating-linear-gradient(
+        to right,
+        var(--pixel-dash-color, #3a3a3a) 0,
+        var(--pixel-dash-color, #3a3a3a) calc(5 * var(--pixel)),
+        transparent calc(5 * var(--pixel)),
+        transparent calc(8 * var(--pixel))
+    );
+    background-size: 100% var(--pixel);
+    background-origin: border-box;
+    background-repeat: no-repeat;
+}
+
+.pixel-border-dashed-b {
+    border-bottom: var(--pixel) solid transparent;
+}
+
+.pixel-border-dashed-t { border-top: var(--pixel) solid transparent; }
+.pixel-border-dashed-b { background-position: bottom left; }
+.pixel-border-dashed-t { background-position: top left; }
+
+.pixel-border-dashed,
+.pixel-border-dashed-left {
+    border: var(--pixel) solid transparent;
+    background-repeat: no-repeat;
+    background-origin: border-box;
+}
+
+.pixel-border-dashed {
+    background-image:
+        repeating-linear-gradient(
+            to right,
+            var(--pixel-dash-color, #3a3a3a) 0,
+            var(--pixel-dash-color, #3a3a3a) calc(5 * var(--pixel)),
+            transparent calc(5 * var(--pixel)),
+            transparent calc(8 * var(--pixel))
+        ),
+        repeating-linear-gradient(
+            to right,
+            var(--pixel-dash-color, #3a3a3a) 0,
+            var(--pixel-dash-color, #3a3a3a) calc(5 * var(--pixel)),
+            transparent calc(5 * var(--pixel)),
+            transparent calc(8 * var(--pixel))
+        ),
+        repeating-linear-gradient(
+            to bottom,
+            var(--pixel-dash-color, #3a3a3a) 0,
+            var(--pixel-dash-color, #3a3a3a) calc(5 * var(--pixel)),
+            transparent calc(5 * var(--pixel)),
+            transparent calc(8 * var(--pixel))
+        ),
+        repeating-linear-gradient(
+            to bottom,
+            var(--pixel-dash-color, #3a3a3a) 0,
+            var(--pixel-dash-color, #3a3a3a) calc(5 * var(--pixel)),
+            transparent calc(5 * var(--pixel)),
+            transparent calc(8 * var(--pixel))
+        );
+    background-size:
+        100% var(--pixel),
+        100% var(--pixel),
+        var(--pixel) 100%,
+        var(--pixel) 100%;
+    background-position: top left, bottom left, top left, top right;
+}
+
+.pixel-border-dashed-left {
+    border-left-color: var(--pixel-dash-solid-color, transparent);
+    background-image:
+        repeating-linear-gradient(
+            to right,
+            var(--pixel-dash-color, #3a3a3a) 0,
+            var(--pixel-dash-color, #3a3a3a) calc(5 * var(--pixel)),
+            transparent calc(5 * var(--pixel)),
+            transparent calc(8 * var(--pixel))
+        ),
+        repeating-linear-gradient(
+            to right,
+            var(--pixel-dash-color, #3a3a3a) 0,
+            var(--pixel-dash-color, #3a3a3a) calc(5 * var(--pixel)),
+            transparent calc(5 * var(--pixel)),
+            transparent calc(8 * var(--pixel))
+        ),
+        repeating-linear-gradient(
+            to bottom,
+            var(--pixel-dash-color, #3a3a3a) 0,
+            var(--pixel-dash-color, #3a3a3a) calc(5 * var(--pixel)),
+            transparent calc(5 * var(--pixel)),
+            transparent calc(8 * var(--pixel))
+        );
+    background-size: 100% var(--pixel), 100% var(--pixel), var(--pixel) 100%;
+    background-position: top left, bottom left, top right;
+}
+
+.pixel-border-dashed-hover:hover {
+    --pixel-dash-color: #666666;
+}
+
+@media (min-width: 768px) {
+    .md\:pixel-dashed-r {
+        background-image: repeating-linear-gradient(
+            to bottom,
+            #3a3a3a 0,
+            #3a3a3a calc(5 * var(--pixel)),
+            transparent calc(5 * var(--pixel)),
+            transparent calc(8 * var(--pixel))
+        );
+        background-position: top right;
+        background-size: var(--pixel) 100%;
+        background-repeat: no-repeat;
+    }
+
+    .md\:pixel-dashed-l {
+        background-image: repeating-linear-gradient(
+            to bottom,
+            #3a3a3a 0,
+            #3a3a3a calc(5 * var(--pixel)),
+            transparent calc(5 * var(--pixel)),
+            transparent calc(8 * var(--pixel))
+        );
+        background-position: top left;
+        background-size: var(--pixel) 100%;
+        background-repeat: no-repeat;
+    }
+}

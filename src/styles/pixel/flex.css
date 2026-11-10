@@ -1,0 +1,111 @@
+/* Flex layout primitives. The gap property is intentionally left to either
+ * Tailwind or the React helper's explicit `gap` prop so normal utilities can
+ * continue to win the cascade. */
+.pixel-row {
+  display: flex;
+  flex-direction: row;
+  --pixel-gap: 0px;
+}
+
+.pixel-column {
+  display: flex;
+  flex-direction: column;
+  --pixel-gap: 0px;
+}
+
+.pixel-stack {
+  display: flex;
+  flex-direction: column;
+  --pixel-gap: 0px;
+}
+
+.pixel-cluster {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  --pixel-gap: 0px;
+}
+
+/*
+ * Equal distribution uses explicit, rounded grid tracks. CSS flex-grow and
+ * `1fr` both distribute a remainder as fractions; this keeps every boundary
+ * on the local virtual-pixel grid. The React helpers provide the item count.
+ */
+[data-pixel-distribute="true"][data-pixel-axis="row"] {
+  display: grid;
+  grid-template-columns: repeat(var(--pixel-item-count),
+      minmax(0,
+        round(down,
+          calc((100% - ((var(--pixel-item-count) - 1) * var(--pixel-gap))) / var(--pixel-item-count)),
+          var(--pixel))));
+  justify-content: start;
+}
+
+[data-pixel-distribute="true"][data-pixel-axis="column"] {
+  display: grid;
+  grid-template-rows: repeat(var(--pixel-item-count),
+      minmax(0,
+        round(down,
+          calc((100% - ((var(--pixel-item-count) - 1) * var(--pixel-gap))) / var(--pixel-item-count)),
+          var(--pixel))));
+  align-content: start;
+}
+
+[data-pixel-distribute="true"]>* {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* OreUI-style block controls base display */
+.pixel-block-button {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.pixel-block-button__face,
+.pixel-block-button__layer,
+.pixel-block-button__extrusion {
+  display: block;
+}
+
+@layer components {
+  .pixel-card {
+    padding: var(--pixel-card-padding, 0px);
+  }
+
+  /* Longhands keep Tailwind border-color/style utilities composable. */
+  .pixel-border {
+    border-width: var(--pixel);
+    border-style: solid;
+    border-color: currentColor;
+  }
+
+  .pixel-border-2 {
+    border-width: calc(2 * var(--pixel));
+    border-style: solid;
+    border-color: currentColor;
+  }
+
+  .pixel-shadow {
+    box-shadow: calc(2 * var(--pixel)) calc(2 * var(--pixel)) 0 0 rgba(0, 0, 0, 0.7);
+  }
+
+  .pixel-shadow-sm {
+    box-shadow: calc(1 * var(--pixel)) calc(1 * var(--pixel)) 0 0 rgba(0, 0, 0, 0.7);
+  }
+
+  .pixel-shadow-accent {
+    box-shadow: calc(2 * var(--pixel)) calc(2 * var(--pixel)) 0 0 currentColor;
+  }
+
+  .pixel-pressable {
+    transition: transform 0.05s step-end, box-shadow 0.05s step-end;
+    user-select: none;
+  }
+
+  .pixel-pressable:active {
+    transform: translate(calc(1 * var(--pixel)), calc(1 * var(--pixel)));
+    box-shadow: calc(1 * var(--pixel)) calc(1 * var(--pixel)) 0 0 currentColor;
+  }
+}

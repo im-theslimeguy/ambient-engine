@@ -1,0 +1,183 @@
+---
+import "../styles/site.css";
+import { groupFor, groups, pageHref, pages, type DocLink } from "../nav";
+
+interface Heading {
+	depth: number;
+	slug: string;
+	text: string;
+}
+
+interface Props {
+	id: string;
+	title: string;
+	description: string;
+	headings: Heading[];
+}
+
+const { id, title, description, headings } = Astro.props;
+const group = groupFor(id);
+const index = pages.findIndex((page) => page.id === id);
+const previous: DocLink | undefined = index > 0 ? pages[index - 1] : undefined;
+const next: DocLink | undefined = index >= 0 && index < pages.length - 1 ? pages[index + 1] : undefined;
+const toc = headings.filter((heading) => heading.depth === 2);
+const base = import.meta.env.BASE_URL;
+---
+
+<html lang="en" data-base={base}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{title} — Ambient Engine</title>
+		<meta name="description" content={description} />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+		/>
+	</head>
+	<body>
+		<div class="pixel-canvas" data-pixel-canvas style="--pixel: 1.5px;">
+			<div class="min-h-screen w-full bg-[#1A1A1A] text-[#e5e5e5] relative flex flex-col">
+				<canvas class="pixel-blast" data-pixel-blast></canvas>
+
+				<header class="sticky top-0 z-50 w-full pixel-border-dashed-b bg-[#1a1a1a]/95 backdrop-blur-md px-6 lg:px-10 py-5 pb-6">
+					<div class="flex flex-row items-start justify-between">
+						<a href={pageHref("index")} class="pixel-text font-block font-bold text-2xl text-white tracking-normal">Ambient Engine</a>
+						<nav class="flex items-center gap-6 lg:gap-7 mt-2">
+							<a href={pageHref("index")} class="pixel-text font-block font-semibold text-sm text-white">Docs</a>
+							<a href={pageHref("install")} class="pixel-text font-block text-sm text-[#888888] hover:text-white transition-colors">Install</a>
+							<a href={pageHref("lifecycle")} class="pixel-text font-block text-sm text-[#888888] hover:text-white transition-colors">API</a>
+							<span class="pixel-text font-block text-sm inline-flex items-center gap-2 text-[#888888]">
+								<span>GitHub</span>
+								<span aria-hidden="true" class="inline-flex w-8 justify-center">↗</span>
+							</span>
+							<button
+								type="button"
+								data-grid-debug
+								data-on="false"
+								data-pixel-size="sm"
+								class="pixel-button font-block font-bold inline-flex items-center justify-center pixel-border pixel-pressable cursor-pointer bg-zinc-800 text-zinc-100 border-zinc-700 pixel-shadow ml-2"
+							>
+								GRID DEBUG: OFF [P]
+							</button>
+						</nav>
+					</div>
+				</header>
+
+				<div class="pixel-page-layout gap-8 lg:gap-12 xl:gap-16 p-4 lg:p-8 pb-16 flex-1 w-full max-w-[calc(1033*var(--pixel))] mx-auto relative z-10 items-start">
+					<aside class="w-full sticky top-[calc(51*var(--pixel))] self-start">
+						<div class="pixel-block-card border-1 border-black font-block min-w-0 flex flex-row w-full">
+							<div class="pixel-block-card__extrusion shrink-0 w-2 bg-[#222222]"></div>
+							<div class="pixel-block-card__face font-block border-1 min-w-0 flex-1 p-5 lg:p-6 bg-[#292929] border-[#404040] text-white">
+								<div class="flex flex-col gap-8">
+									{
+										groups.map((section) => (
+											<div>
+												<div class="font-block font-bold text-sm leading-16 text-white pixel-border-dashed-b [--pixel-dash-color:#444444] pb-2 mb-4 tracking-pixel">
+													{section.label}
+												</div>
+												<ul class="flex flex-col gap-2 list-none p-0 m-0">
+													{section.items.map((item) => (
+														<li>
+															<a
+																href={pageHref(item.id)}
+																class:list={[
+																	"pixel-text font-block block text-sm px-3 py-2",
+																	item.id === id
+																		? "font-semibold text-white bg-[#1e1e1e] border-l-2 border-white"
+																		: "text-[#a3a3a3] hover:text-white hover:bg-[#222222] transition-all",
+																]}
+															>
+																{item.label}
+															</a>
+														</li>
+													))}
+												</ul>
+											</div>
+										))
+									}
+								</div>
+							</div>
+						</div>
+					</aside>
+
+					<main class="min-w-0 max-w-[calc(507*var(--pixel))] mx-auto flex flex-col gap-2 relative z-10 w-full px-1 lg:px-4 pt-5 lg:pt-6">
+						<div class="pb-6 mb-2">
+							<div class="flex flex-row flex-wrap items-center gap-2 text-xs text-[#888888] mb-5">
+								<a href={pageHref("index")} class="font-sans text-xs text-[#888888] hover:text-white transition-colors">Docs</a>
+								<span class="text-[#444444]">/</span>
+								<span class="font-sans text-xs text-[#888888]">{group?.label}</span>
+								<span class="text-[#444444]">/</span>
+								<span class="font-sans text-xs text-[#a3a3a3]">{title}</span>
+							</div>
+							<div class="flex flex-row flex-wrap items-center gap-3 mb-4">
+								<span class="font-block font-bold text-sm inline-block leading-10 bg-[#242424] text-[#a3a3a3] pixel-border-dashed px-3 py-1">v0.1.0</span>
+								<span class="pixel-badge font-block font-bold inline-flex items-center pixel-border select-none bg-emerald-950 text-emerald-300 border-emerald-500/60">CLIENT LIBRARY</span>
+							</div>
+							<h1 class="pixel-text font-block font-bold tracking-pixel text-white text-3xl leading-30 mt-2 mb-5">{title}</h1>
+							<p class="font-sans text-base text-[#a3a3a3] mb-0">{description}</p>
+						</div>
+						<div class="pixel-dashed-b" style="height: calc(1 * var(--pixel)); width: 100%; margin-block: calc(10 * var(--pixel));"></div>
+						<div class="doc">
+							<slot />
+						</div>
+						<div class="flex flex-row gap-5 mt-8 pt-4">
+							{
+								previous && (
+									<a
+										href={pageHref(previous.id)}
+										class="flex-1 flex flex-col p-5 bg-[#1e1e1e] pixel-border-dashed pixel-border-dashed-hover hover:bg-[#242424] transition-all text-left no-underline gap-2"
+									>
+										<span class="font-sans text-xs text-[#888888]">Previous</span>
+										<span class="font-block font-bold text-base text-white">← {previous.label}</span>
+									</a>
+								)
+							}
+							{
+								next && (
+									<a
+										href={pageHref(next.id)}
+										class="flex-1 flex flex-col p-5 bg-[#1e1e1e] pixel-border-dashed pixel-border-dashed-hover hover:bg-[#242424] transition-all text-right no-underline gap-2"
+									>
+										<span class="font-sans text-xs text-[#888888]">Next</span>
+										<span class="font-block font-bold text-base text-white">{next.label} →</span>
+									</a>
+								)
+							}
+						</div>
+					</main>
+
+					<aside class="w-full sticky top-[calc(51*var(--pixel))] self-start">
+						<div class="pixel-block-card border-1 border-black font-block min-w-0 flex flex-row w-full">
+							<div class="pixel-block-card__face font-block border-1 min-w-0 flex-1 p-5 lg:p-6 bg-[#292929] border-[#404040] text-white">
+								<div class="font-block font-bold text-sm leading-16 text-white pixel-border-dashed-b [--pixel-dash-color:#444444] pb-2 mb-4 tracking-pixel">
+									On this page
+								</div>
+								<ul class="flex flex-col gap-3 list-none p-0 m-0">
+									{
+										toc.map((heading) => (
+											<li>
+												<a href={`#${heading.slug}`} class="pixel-text font-block block text-sm text-[#888888] hover:text-white transition-colors py-1">
+													{heading.text}
+												</a>
+											</li>
+										))
+									}
+								</ul>
+							</div>
+							<div class="pixel-block-card__extrusion shrink-0 w-2 bg-[#222222]"></div>
+						</div>
+					</aside>
+				</div>
+
+				<footer class="w-full pixel-border-dashed-t px-6 lg:px-10 py-5 flex items-center justify-between text-xs text-[#666666] bg-[#181818]/90 backdrop-blur-sm relative z-10">
+					<span class="font-sans text-xs text-[#666666]">Ambient Engine 0.1.0</span>
+					<span class="font-sans text-xs text-[#888888]">PolyForm Noncommercial 1.0.0</span>
+				</footer>
+			</div>
+		</div>
+		<script src="../scripts/shell.js"></script>
+	</body>
+</html>

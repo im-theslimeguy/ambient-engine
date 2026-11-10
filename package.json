@@ -1,0 +1,16 @@
+{
+  "name": "ambient-engine-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.16",
+    "astro": "^5.16.0",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^4.1.16"
+  }
+}
