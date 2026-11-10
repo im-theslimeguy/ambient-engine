@@ -214,3 +214,70 @@ void main(){
 		window.addEventListener("resize", resize);
 	}
 }
+
+const ambientRoot = document.querySelector(".doc");
+if (ambientRoot?.querySelector("[data-ambient]")) {
+	refreshAmbientExample(ambientRoot);
+}
+
+function compareGame(left, right) {
+	const a = left.split(".").map(Number);
+	const b = right.split(".").map(Number);
+	const length = Math.max(a.length, b.length);
+	for (let i = 0; i < length; i++) {
+		const delta = (a[i] || 0) - (b[i] || 0);
+		if (delta) return delta;
+	}
+	return 0;
+}
+
+async function refreshAmbientExample(root) {
+	try {
+		const versions = await loadAmbientVersions();
+		if (!versions) return;
+		let newestGame = "";
+		for (const version of versions) {
+			for (const game of version.game_versions || []) {
+				if (!/^\d+(?:\.\d+)*$/.test(game)) continue;
+				if (!newestGame || compareGame(game, newestGame) > 0) newestGame = game;
+			}
+		}
+		const matches = versions.filter((version) => (version.game_versions || []).includes(newestGame));
+		matches.sort((a, b) => Date.parse(b.date_published) - Date.parse(a.date_published));
+		const picked = matches[0];
+		if (!picked || !newestGame) return;
+		const fields = {
+			number: picked.version_number,
+			game: newestGame,
+			project: picked.project_id,
+			version: picked.id,
+		};
+		root.querySelectorAll("[data-ambient]").forEach((node) => {
+			const value = fields[node.getAttribute("data-ambient")];
+			if (value) node.textContent = value;
+		});
+		const coordinate = `maven.modrinth:${picked.project_id}:${picked.id}`;
+		const pattern = /maven\.modrinth:[A-Za-z0-9]+:[A-Za-z0-9]+/;
+		const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+		const nodes = [];
+		while (walker.nextNode()) nodes.push(walker.currentNode);
+		for (const node of nodes) {
+			if (pattern.test(node.nodeValue)) node.nodeValue = node.nodeValue.replace(pattern, coordinate);
+		}
+	} catch {
+		// The ids written into the page stay in place.
+	}
+}
+
+async function loadAmbientVersions() {
+	for (const url of [
+		"https://api.modrinth.com/v2/project/ambient-engine/version",
+		"https://api.modrinth.com/v2/project/6Dndi5in/version",
+	]) {
+		const response = await fetch(url);
+		if (!response.ok) continue;
+		const body = await response.json();
+		if (Array.isArray(body) && body.length) return body;
+	}
+	return null;
+}

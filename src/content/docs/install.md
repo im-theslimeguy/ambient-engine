@@ -11,13 +11,13 @@ The license is PolyForm Noncommercial 1.0.0.
 
 Every file uploaded to Modrinth is available from Modrinth's Maven repository. Gradle coordinates use the **project id** and the **version id** from that file's Modrinth page. They are not the project slug, and they are not the human version number `0.1.0`.
 
-A published Beef mod looks like this. These two ids belong to Rainy Atmosphere, version `9BBjlQet`. Copy the ids from the Ambient Engine version you are actually compiling against. Reusing the Rainy ids will download Rainy Atmosphere.
+The example below is the newest Ambient Engine file that lists the newest Minecraft version. This release is <span data-ambient="number">0.1.0</span> for Minecraft <span data-ambient="game">26.3</span>. The project id is <span data-ambient="project">6Dndi5in</span> and the version id is <span data-ambient="version">eGOmFlTG</span>.
 
 ```
-maven.modrinth:bcDfDL4E:9BBjlQet
+maven.modrinth:6Dndi5in:eGOmFlTG
 ```
 
-Ambient Engine will show the same kind of block on its version page:
+On load, this page asks `https://api.modrinth.com/v2/project/ambient-engine/version` for the project's files. When that request succeeds, it replaces the ids above with the newest file whose game versions include the newest Minecraft version. A file for an older line has its own version id. Compiling for 1.21.4 means that file's id, not the 26.3 id.
 
 ```groovy
 repositories {
@@ -36,7 +36,7 @@ repositories {
 }
 
 dependencies {
-    modImplementation "maven.modrinth:<project-id>:<version-id>"
+    modImplementation "maven.modrinth:6Dndi5in:eGOmFlTG"
 }
 ```
 
@@ -46,16 +46,16 @@ dependencies {
 
 | Your build | Dependency line |
 | --- | --- |
-| Loom templates that still expose `modImplementation` | `modImplementation "maven.modrinth:<project-id>:<version-id>"` |
-| Loom 1.17 on Minecraft 26.x, where that configuration does not exist | `implementation "maven.modrinth:<project-id>:<version-id>"` |
-| ForgeGradle | `modImplementation "maven.modrinth:<project-id>:<version-id>"` |
-| NeoForge ModDevGradle | `implementation "maven.modrinth:<project-id>:<version-id>"` |
+| Loom templates that still expose `modImplementation` | `modImplementation "maven.modrinth:6Dndi5in:eGOmFlTG"` |
+| Loom 1.17 on Minecraft 26.x, where that configuration does not exist | `implementation "maven.modrinth:6Dndi5in:eGOmFlTG"` |
+| ForgeGradle | `modImplementation "maven.modrinth:6Dndi5in:eGOmFlTG"` |
+| NeoForge ModDevGradle | `implementation "maven.modrinth:6Dndi5in:eGOmFlTG"` |
 
 Kotlin DSL is the same coordinates with parentheses:
 
 ```kotlin
 dependencies {
-    modImplementation("maven.modrinth:<project-id>:<version-id>")
+    modImplementation("maven.modrinth:6Dndi5in:eGOmFlTG")
 }
 ```
 
