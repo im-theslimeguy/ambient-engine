@@ -31,7 +31,7 @@
     /* This drives spacing, sizing and numeric `leading-*` utilities. */
     --spacing: var(--pixel);
 
-    --font-block: 'BlockFont', monospace;
+    --font-block: 'Minecraft Seven', monospace;
     --font-sans: 'Space Grotesk', sans-serif;
     --font-inter: 'Space Grotesk', sans-serif;
 
@@ -126,7 +126,7 @@
         0 calc(-0.5 * var(--pixel-debug-line));
 }
 
-/* BlockFont is a raster-like face. Keep browser text smoothing off wherever
+/* Minecraft Seven is a raster face. Keep browser text smoothing off wherever
  * the font utility is used so every component shares the same glyph policy. */
 @layer components {
     .font-block {

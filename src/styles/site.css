@@ -1,38 +1,6 @@
 @import "tailwindcss";
 @import "./pixel/index.css";
 
-@font-face {
-	font-family: "BlockFont";
-	src: url("./fonts/BlockFont-Regular.woff") format("woff");
-	font-weight: 400;
-	font-style: normal;
-	font-display: swap;
-}
-
-@font-face {
-	font-family: "BlockFont";
-	src: url("./fonts/BlockFont-Italic.woff") format("woff");
-	font-weight: 400;
-	font-style: italic;
-	font-display: swap;
-}
-
-@font-face {
-	font-family: "BlockFont";
-	src: url("./fonts/BlockFont-Bold.woff") format("woff");
-	font-weight: 700;
-	font-style: normal;
-	font-display: swap;
-}
-
-@font-face {
-	font-family: "BlockFont";
-	src: url("./fonts/BlockFont-BoldItalic.woff") format("woff");
-	font-weight: 700;
-	font-style: italic;
-	font-display: swap;
-}
-
 html,
 body {
 	min-height: 100%;
@@ -72,8 +40,8 @@ body {
 .pixel-blast {
 	position: fixed;
 	inset: 0;
-	width: 100%;
-	height: 100%;
+	width: 100vw;
+	height: 100vh;
 	pointer-events: none;
 	z-index: 0;
 	opacity: 0.23;
@@ -88,7 +56,7 @@ body {
 
 .doc h2,
 .doc h3 {
-	font-family: "BlockFont", monospace;
+	font-family: "Minecraft Seven", monospace;
 	font-weight: 700;
 	letter-spacing: var(--pixel);
 	color: #ffffff;
@@ -114,7 +82,7 @@ body {
 }
 
 .doc a {
-	color: #6ee7b7;
+	color: #ebbc44;
 	text-decoration: none;
 }
 
@@ -138,13 +106,13 @@ body {
 }
 
 .doc :not(pre) > code {
-	font-family: "BlockFont", monospace;
+	font-family: "Minecraft Seven", monospace;
 	font-size: var(--font-pixel-base);
 	line-height: var(--leading-pixel-base);
 	padding: calc(1 * var(--pixel)) calc(3 * var(--pixel));
 	margin-inline: calc(1 * var(--pixel));
 	vertical-align: top;
-	color: #6ee7b7;
+	color: #ebbc44;
 	background: rgb(9 9 11 / 0.8);
 	border: var(--pixel) solid rgb(63 63 70 / 0.7);
 	-webkit-font-smoothing: none;
@@ -166,7 +134,7 @@ body {
 	border-bottom: var(--pixel) solid #3a3a3a;
 	border-right: var(--pixel) solid #3a3a3a;
 	padding: calc(4 * var(--pixel));
-	font-family: "BlockFont", monospace;
+	font-family: "Minecraft Seven", monospace;
 	font-weight: 700;
 	font-size: var(--text-sm);
 	line-height: calc(13 * var(--pixel));

@@ -1,32 +1,3 @@
-const canvas = document.querySelector("[data-pixel-canvas]");
-const debugButton = document.querySelector("[data-grid-debug]");
-
-function setDebug(on) {
-	canvas?.classList.toggle("pixel-grid-debug", on);
-	if (debugButton) {
-		debugButton.dataset.on = on ? "true" : "false";
-		debugButton.className = on
-			? "pixel-button font-block font-bold inline-flex items-center justify-center pixel-border pixel-pressable cursor-pointer bg-emerald-400 text-zinc-950 border-emerald-300 pixel-shadow ml-2"
-			: "pixel-button font-block font-bold inline-flex items-center justify-center pixel-border pixel-pressable cursor-pointer bg-zinc-800 text-zinc-100 border-zinc-700 pixel-shadow ml-2";
-		debugButton.textContent = `GRID DEBUG: ${on ? "ON" : "OFF"} [P]`;
-	}
-}
-
-debugButton?.addEventListener("click", () => {
-	setDebug(debugButton.dataset.on !== "true");
-});
-
-window.addEventListener("keydown", (event) => {
-	const target = event.target;
-	const editable =
-		target instanceof HTMLElement &&
-		(target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
-	if (event.key.toLowerCase() === "p" && !editable) {
-		event.preventDefault();
-		setDebug(debugButton?.dataset.on !== "true");
-	}
-});
-
 function copyButton() {
 	const wrap = document.createElement("div");
 	wrap.className = "pixel-block-button group inline-flex flex-col";
@@ -99,24 +70,147 @@ if (base !== "/") {
 
 const blast = document.querySelector("[data-pixel-blast]");
 if (blast instanceof HTMLCanvasElement) {
-	const context = blast.getContext("2d");
-	const paint = () => {
-		const rect = blast.getBoundingClientRect();
-		const dpr = Math.min(window.devicePixelRatio || 1, 2);
-		blast.width = Math.floor(rect.width * dpr);
-		blast.height = Math.floor(rect.height * dpr);
-		if (!context) return;
-		context.setTransform(dpr, 0, 0, dpr, 0, 0);
-		context.clearRect(0, 0, rect.width, rect.height);
-		context.fillStyle = "#444444";
-		const cell = 3;
-		for (let y = 0; y < rect.height; y += cell) {
-			for (let x = 0; x < rect.width; x += cell) {
-				const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-				if (n - Math.floor(n) > 0.82) context.fillRect(x, y, 1, 1);
-			}
-		}
-	};
-	paint();
-	window.addEventListener("resize", paint);
+	const gl = blast.getContext("webgl2", { alpha: true, antialias: false, premultipliedAlpha: false });
+	if (gl) {
+		const vertex = `#version 300 es
+in vec2 position;
+void main() { gl_Position = vec4(position, 0.0, 1.0); }`;
+		const fragment = `#version 300 es
+precision highp float;
+uniform vec3 uColor;
+uniform vec2 uResolution;
+uniform vec2 uPixelOrigin;
+uniform float uTime;
+uniform float uPixelSize;
+uniform float uScale;
+uniform float uDensity;
+uniform float uPixelJitter;
+uniform float uEdgeFade;
+uniform int uShapeType;
+const int SHAPE_SQUARE = 0;
+out vec4 fragColor;
+float Bayer2(vec2 a) { a = floor(a); return fract(a.x / 2. + a.y * a.y * .75); }
+#define Bayer4(a) (Bayer2(.5*(a))*0.25 + Bayer2(a))
+#define Bayer8(a) (Bayer4(.5*(a))*0.25 + Bayer2(a))
+#define FBM_OCTAVES 5
+#define FBM_LACUNARITY 1.25
+#define FBM_GAIN 1.0
+float hash11(float n){ return fract(sin(n)*43758.5453); }
+float vnoise(vec3 p){
+  vec3 ip = floor(p);
+  vec3 fp = fract(p);
+  float n000 = hash11(dot(ip + vec3(0.0,0.0,0.0), vec3(1.0,57.0,113.0)));
+  float n100 = hash11(dot(ip + vec3(1.0,0.0,0.0), vec3(1.0,57.0,113.0)));
+  float n010 = hash11(dot(ip + vec3(0.0,1.0,0.0), vec3(1.0,57.0,113.0)));
+  float n110 = hash11(dot(ip + vec3(1.0,1.0,0.0), vec3(1.0,57.0,113.0)));
+  float n001 = hash11(dot(ip + vec3(0.0,0.0,1.0), vec3(1.0,57.0,113.0)));
+  float n101 = hash11(dot(ip + vec3(1.0,0.0,1.0), vec3(1.0,57.0,113.0)));
+  float n011 = hash11(dot(ip + vec3(0.0,1.0,1.0), vec3(1.0,57.0,113.0)));
+  float n111 = hash11(dot(ip + vec3(1.0,1.0,1.0), vec3(1.0,57.0,113.0)));
+  vec3 w = fp*fp*fp*(fp*(fp*6.0-15.0)+10.0);
+  float x00 = mix(n000, n100, w.x);
+  float x10 = mix(n010, n110, w.x);
+  float x01 = mix(n001, n101, w.x);
+  float x11 = mix(n011, n111, w.x);
+  float y0 = mix(x00, x10, w.y);
+  float y1 = mix(x01, x11, w.y);
+  return mix(y0, y1, w.z) * 2.0 - 1.0;
+}
+float fbm2(vec2 uv, float t){
+  vec3 p = vec3(uv * uScale, t);
+  float amp = 1.0;
+  float freq = 1.0;
+  float sum = 1.0;
+  for (int i = 0; i < FBM_OCTAVES; ++i){
+    sum += amp * vnoise(p * freq);
+    freq *= FBM_LACUNARITY;
+    amp *= FBM_GAIN;
+  }
+  return sum * 0.5 + 0.5;
+}
+void main(){
+  float pixelSize = uPixelSize;
+  vec2 localFragCoord = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+  vec2 fragCoord = localFragCoord + uPixelOrigin;
+  float aspectRatio = uResolution.x / uResolution.y;
+  vec2 pixelId = floor(fragCoord / pixelSize);
+  vec2 cellPixelSize = vec2(8.0 * pixelSize);
+  vec2 cellId = floor(fragCoord / cellPixelSize);
+  vec2 cellCoord = cellId * cellPixelSize;
+  vec2 uv = cellCoord / uResolution * vec2(aspectRatio, 1.0);
+  float base = fbm2(uv, uTime * 0.05);
+  base = base * 0.5 - 0.65;
+  float feed = base + (uDensity - 0.5) * 0.3;
+  float bayer = Bayer8(fragCoord / uPixelSize) - 0.5;
+  float bw = step(0.5, feed + bayer);
+  float h = fract(sin(dot(floor(fragCoord / uPixelSize), vec2(127.1, 311.7))) * 43758.5453);
+  float jitterScale = 1.0 + (h - 0.5) * uPixelJitter;
+  float coverage = bw * jitterScale;
+  vec3 color = uColor;
+  vec3 srgbColor = mix(color * 12.92, 1.055 * pow(color, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, color));
+  fragColor = vec4(srgbColor, coverage);
+}`;
+		const compile = (type, source) => {
+			const shader = gl.createShader(type);
+			gl.shaderSource(shader, source);
+			gl.compileShader(shader);
+			return shader;
+		};
+		const program = gl.createProgram();
+		gl.attachShader(program, compile(gl.VERTEX_SHADER, vertex));
+		gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragment));
+		gl.linkProgram(program);
+		gl.useProgram(program);
+		const buffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+		const position = gl.getAttribLocation(program, "position");
+		gl.enableVertexAttribArray(position);
+		gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+		const uniforms = {
+			uColor: gl.getUniformLocation(program, "uColor"),
+			uResolution: gl.getUniformLocation(program, "uResolution"),
+			uPixelOrigin: gl.getUniformLocation(program, "uPixelOrigin"),
+			uTime: gl.getUniformLocation(program, "uTime"),
+			uPixelSize: gl.getUniformLocation(program, "uPixelSize"),
+			uScale: gl.getUniformLocation(program, "uScale"),
+			uDensity: gl.getUniformLocation(program, "uDensity"),
+			uPixelJitter: gl.getUniformLocation(program, "uPixelJitter"),
+			uEdgeFade: gl.getUniformLocation(program, "uEdgeFade"),
+			uShapeType: gl.getUniformLocation(program, "uShapeType"),
+		};
+		gl.uniform3f(uniforms.uColor, 0x44 / 255, 0x44 / 255, 0x44 / 255);
+		gl.uniform1f(uniforms.uScale, 3);
+		gl.uniform1f(uniforms.uDensity, 1.2);
+		gl.uniform1f(uniforms.uPixelJitter, 0);
+		gl.uniform1f(uniforms.uEdgeFade, 0);
+		gl.uniform1i(uniforms.uShapeType, 0);
+		const resize = () => {
+			const dpr = Math.min(window.devicePixelRatio || 1, 2);
+			const width = Math.floor(window.innerWidth * dpr);
+			const height = Math.floor(window.innerHeight * dpr);
+			blast.width = width;
+			blast.height = height;
+			gl.viewport(0, 0, width, height);
+			gl.useProgram(program);
+			gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+			gl.enableVertexAttribArray(position);
+			gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+			gl.uniform3f(uniforms.uColor, 0x44 / 255, 0x44 / 255, 0x44 / 255);
+			gl.uniform1f(uniforms.uScale, 3);
+			gl.uniform1f(uniforms.uDensity, 1.2);
+			gl.uniform1f(uniforms.uPixelJitter, 0);
+			gl.uniform1f(uniforms.uEdgeFade, 0);
+			gl.uniform1i(uniforms.uShapeType, 0);
+			gl.uniform2f(uniforms.uPixelOrigin, 0, 0);
+			gl.uniform2f(uniforms.uResolution, width, height);
+			gl.uniform1f(uniforms.uPixelSize, 1.5 * dpr);
+			gl.enable(gl.BLEND);
+			gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+			gl.uniform1f(uniforms.uTime, 8);
+			gl.drawArrays(gl.TRIANGLES, 0, 6);
+		};
+		resize();
+		window.addEventListener("resize", resize);
+	}
 }

@@ -1,5 +1,7 @@
 ---
 import "../styles/site.css";
+import logo from "../assets/ambient_engine_logo.png";
+import wordmark from "../assets/ambient_engine_horizontal.png";
 import { groupFor, groups, pageHref, pages, type DocLink } from "../nav";
 
 interface Heading {
@@ -36,16 +38,64 @@ const base = import.meta.env.BASE_URL;
 			rel="stylesheet"
 			href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
 		/>
+		<style>
+			html:not(.font-ready) .pixel-canvas { visibility: hidden; }
+			.font-loading {
+				position: fixed;
+				inset: 0;
+				z-index: 10000;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: #1a1a1a;
+				color: #e5e5e5;
+				font-family: "Space Grotesk", sans-serif;
+				font-size: 16px;
+			}
+			html.font-ready .font-loading { display: none; }
+		</style>
+		<script is:inline>
+			const minecraftSevenUrl = "https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/fonts/Minecraft-Seven_v2.woff2";
+			const loading = () => document.querySelector(".font-loading");
+			(async () => {
+				try {
+					const response = await fetch(minecraftSevenUrl);
+					if (!response.ok) throw new Error(String(response.status));
+					const bytes = await response.arrayBuffer();
+					globalThis.minecraftSevenBytes = bytes;
+					const source = URL.createObjectURL(new Blob([bytes], { type: "font/woff2" }));
+					const face = new FontFace("Minecraft Seven", `url(${source})`, {
+						weight: "100 900",
+						style: "normal",
+						display: "block",
+					});
+					await face.load();
+					document.fonts.add(face);
+					if (!document.fonts.check('700 32px "Minecraft Seven"')) {
+						throw new Error("Minecraft Seven did not register");
+					}
+					document.documentElement.classList.add("font-ready");
+				} catch (error) {
+					const node = loading();
+					if (node) node.textContent = "Could not load Minecraft Seven";
+					console.error(error);
+				}
+			})();
+		</script>
 	</head>
 	<body>
+		<div class="font-loading">Loading</div>
 		<div class="pixel-canvas" data-pixel-canvas style="--pixel: 1.5px;">
 			<div class="min-h-screen w-full bg-[#1A1A1A] text-[#e5e5e5] relative flex flex-col">
 				<canvas class="pixel-blast" data-pixel-blast></canvas>
 
 				<header class="sticky top-0 z-50 w-full pixel-border-dashed-b bg-[#1a1a1a]/95 backdrop-blur-md px-6 lg:px-10 py-5 pb-6">
-					<div class="flex flex-row items-start justify-between">
-						<a href={pageHref("index")} class="pixel-text font-block font-bold text-2xl text-white tracking-normal">Ambient Engine</a>
-						<nav class="flex items-center gap-6 lg:gap-7 mt-2">
+					<div class="flex flex-row items-center justify-between">
+						<a href={pageHref("index")} class="inline-flex items-center shrink-0" style="gap: 10px;">
+							<img src={logo.src} alt="" width="48" height="48" class="object-contain" style="height: 48px; width: 48px;" />
+							<img src={wordmark.src} alt="Ambient Engine" width={wordmark.width} height={wordmark.height} class="w-auto" style="height: 22px;" />
+						</a>
+						<nav class="flex items-center gap-6 lg:gap-7">
 							<a href={pageHref("index")} class="pixel-text font-block font-semibold text-sm text-white">Docs</a>
 							<a href={pageHref("install")} class="pixel-text font-block text-sm text-[#888888] hover:text-white transition-colors">Install</a>
 							<a href={pageHref("lifecycle")} class="pixel-text font-block text-sm text-[#888888] hover:text-white transition-colors">API</a>
@@ -53,15 +103,6 @@ const base = import.meta.env.BASE_URL;
 								<span>GitHub</span>
 								<span aria-hidden="true" class="inline-flex w-8 justify-center">↗</span>
 							</span>
-							<button
-								type="button"
-								data-grid-debug
-								data-on="false"
-								data-pixel-size="sm"
-								class="pixel-button font-block font-bold inline-flex items-center justify-center pixel-border pixel-pressable cursor-pointer bg-zinc-800 text-zinc-100 border-zinc-700 pixel-shadow ml-2"
-							>
-								GRID DEBUG: OFF [P]
-							</button>
 						</nav>
 					</div>
 				</header>
@@ -114,7 +155,7 @@ const base = import.meta.env.BASE_URL;
 							</div>
 							<div class="flex flex-row flex-wrap items-center gap-3 mb-4">
 								<span class="font-block font-bold text-sm inline-block leading-10 bg-[#242424] text-[#a3a3a3] pixel-border-dashed px-3 py-1">v0.1.0</span>
-								<span class="pixel-badge font-block font-bold inline-flex items-center pixel-border select-none bg-emerald-950 text-emerald-300 border-emerald-500/60">CLIENT LIBRARY</span>
+								<span class="pixel-badge font-block font-bold inline-flex items-center pixel-border select-none" style="background:#2a210c;color:#f1c946;border-color:#ebbc4499;">CLIENT LIBRARY</span>
 							</div>
 							<h1 class="pixel-text font-block font-bold tracking-pixel text-white text-3xl leading-30 mt-2 mb-5">{title}</h1>
 							<p class="font-sans text-base text-[#a3a3a3] mb-0">{description}</p>
