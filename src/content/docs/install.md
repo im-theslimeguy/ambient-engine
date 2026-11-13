@@ -9,9 +9,9 @@ The license is PolyForm Noncommercial 1.0.0.
 
 ## Modrinth Maven
 
-Every file uploaded to Modrinth is available from Modrinth's Maven repository. Gradle coordinates use the **project id** and the **version id** from that file's Modrinth page. They are not the project slug, and they are not the human version number `0.1.0`.
+Every file uploaded to Modrinth is available from Modrinth's Maven repository. Gradle coordinates use the **project id** and the **version id** from that file's Modrinth page. They are not the project slug, and they are not the human version number `0.1.1`.
 
-The example below is the newest Ambient Engine file that lists the newest Minecraft version. This release is <span data-ambient="number">0.1.0</span> for Minecraft <span data-ambient="game">26.3</span>. The project id is <span data-ambient="project">6Dndi5in</span> and the version id is <span data-ambient="version">eGOmFlTG</span>.
+The example below is the newest Ambient Engine file that lists the newest Minecraft version. This release is <span data-ambient="number">0.1.1</span> for Minecraft <span data-ambient="game">26.3</span>. The project id is <span data-ambient="project">6Dndi5in</span> and the version id is <span data-ambient="version">eGOmFlTG</span>.
 
 ```
 maven.modrinth:6Dndi5in:eGOmFlTG
