@@ -7,7 +7,7 @@ One client library for weather, block surfaces, particles, and translucent world
 
 Start with [Install](/install/) or [Your first effect](/first-effect/).
 
-Ambient Engine `0.1.1` is a **client-only library** for Fabric, Forge, and NeoForge. Other mods register effects through a public API that contains no loader types. The engine reads vanilla weather, asks the world about blocks, spawns particles inside a shared budget, and draws camera-relative quads through the vanilla translucent entity pipeline.
+Ambient Engine `0.1.12` is a **client-only library** for Fabric, Forge, and NeoForge. Other mods register effects through a public API that contains no loader types. The engine reads vanilla weather, asks the world about blocks, spawns particles inside a shared budget, and draws camera-relative quads through the vanilla translucent entity pipeline.
 
 It does not replace Minecraft's weather, and it does not ship puddles, frost, or drips of its own. Those stay in the mod that knows the gameplay.
 
